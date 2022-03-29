@@ -267,6 +267,26 @@ async fn test_make_dish() {
         &mpl_fireball::id(),
     );
 
+    banks_client.process_transaction(
+        Transaction::new_signed_with_payer(
+            &[Instruction {
+                program_id: mpl_fireball::id(),
+                accounts: mpl_fireball::accounts::StartDish {
+                    recipe: recipe.pubkey(),
+                    dish: dish_key,
+                    payer: alice.pubkey(),
+                    system_program: system_program::id(),
+                }.to_account_metas(None),
+                data: mpl_fireball::instruction::StartDish {
+                    _dish_bump: dish_bump,
+                }.data(),
+            }],
+            Some(&alice.pubkey()),
+            &[&alice],
+            recent_blockhash,
+        )
+    ).await.unwrap();
+
     for (index, ingredient) in recipe_ingredients.iter().enumerate() {
         let proof = merkle_proof(&leafs, index);
         let proof_raw = proof.iter().map(|v| v.0).collect::<Vec<_>>();
@@ -291,18 +311,6 @@ async fn test_make_dish() {
             &master_mint.pubkey(), as_string); // WTF?
 
         let fulfill_instructions = [
-            Instruction {
-                program_id: mpl_fireball::id(),
-                accounts: mpl_fireball::accounts::StartDish {
-                    recipe: recipe.pubkey(),
-                    dish: dish_key,
-                    payer: alice.pubkey(),
-                    system_program: system_program::id(),
-                }.to_account_metas(None),
-                data: mpl_fireball::instruction::StartDish {
-                    _dish_bump: dish_bump,
-                }.data(),
-            },
             Instruction {
                 program_id: mpl_fireball::id(),
                 accounts: mpl_fireball::accounts::AddIngredient {
@@ -393,7 +401,32 @@ async fn test_make_dish() {
             )
         ).await.unwrap();
 
-        // TODO: close dish and finish iteration
-        break;
+        let close_instructions = [
+            Instruction {
+                program_id: mpl_fireball::id(),
+                accounts: mpl_fireball::accounts::ConsumeIngredient {
+                    recipe: recipe.pubkey(),
+                    dish: dish_key,
+                    ingredient_mint: ingredient.pubkey(),
+                    ingredient_store: ingredient_key,
+                    payer: alice.pubkey(),
+                    system_program: system_program::id(),
+                    token_program: spl_token::id(),
+                }.to_account_metas(None),
+                data: mpl_fireball::instruction::ConsumeIngredient {
+                    ingredient_bump,
+                    ingredient_num,
+                }.data(),
+            },
+        ];
+
+        banks_client.process_transaction(
+            Transaction::new_signed_with_payer(
+                &close_instructions,
+                Some(&alice.pubkey()),
+                &[&alice],
+                recent_blockhash,
+            )
+        ).await.unwrap();
     }
 }
