@@ -1507,6 +1507,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "fireball"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang 0.19.0",
+ "anchor-spl 0.19.0",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-associated-token-account",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"

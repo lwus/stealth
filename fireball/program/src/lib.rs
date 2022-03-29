@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self};
 
-use metaplex_token_metadata::{
+use mpl_token_metadata::{
     instruction::{
         mint_new_edition_from_master_edition_via_token,
     },
@@ -109,30 +109,30 @@ pub mod fireball {
             let master_edition_account = &ctx.remaining_accounts[2].to_account_info();
 
             // check that the edition account matches the edition mint
-            let _edition_bump = metaplex_token_metadata::utils::assert_derivation(
-                &metaplex_token_metadata::ID,
+            let _edition_bump = mpl_token_metadata::utils::assert_derivation(
+                &mpl_token_metadata::ID,
                 edition_account,
                 &[
-                    metaplex_token_metadata::state::PREFIX.as_ref(),
-                    metaplex_token_metadata::ID.as_ref(),
+                    mpl_token_metadata::state::PREFIX.as_ref(),
+                    mpl_token_metadata::ID.as_ref(),
                     edition_mint.key.as_ref(),
-                    metaplex_token_metadata::state::EDITION.as_ref(),
+                    mpl_token_metadata::state::EDITION.as_ref(),
                 ],
             ).map_err(|_| ErrorCode::DerivedKeyInvalid)?;
 
             // check that the master edition account matches the ingredient mint
-            let _master_edition_bump = metaplex_token_metadata::utils::assert_derivation(
-                &metaplex_token_metadata::ID,
+            let _master_edition_bump = mpl_token_metadata::utils::assert_derivation(
+                &mpl_token_metadata::ID,
                 master_edition_account,
                 &[
-                    metaplex_token_metadata::state::PREFIX.as_ref(),
-                    metaplex_token_metadata::ID.as_ref(),
+                    mpl_token_metadata::state::PREFIX.as_ref(),
+                    mpl_token_metadata::ID.as_ref(),
                     ctx.accounts.ingredient_mint.key().as_ref(),
-                    metaplex_token_metadata::state::EDITION.as_ref(),
+                    mpl_token_metadata::state::EDITION.as_ref(),
                 ],
             ).map_err(|_| ErrorCode::DerivedKeyInvalid)?;
 
-            let edition = metaplex_token_metadata::state::Edition::from_account_info(
+            let edition = mpl_token_metadata::state::Edition::from_account_info(
                 edition_account)?;
 
             require!(
