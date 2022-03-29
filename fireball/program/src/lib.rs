@@ -503,7 +503,6 @@ pub struct CreateRecipe<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(dish_bump: u8)]
 pub struct StartDish<'info> {
     pub recipe: Account<'info, Recipe>,
 
@@ -514,7 +513,7 @@ pub struct StartDish<'info> {
             recipe.key().to_bytes().as_ref(),
             payer.key().to_bytes().as_ref()
         ],
-        bump = dish_bump,
+        bump,
         payer = payer,
     )]
     pub dish: Account<'info, Dish>,
