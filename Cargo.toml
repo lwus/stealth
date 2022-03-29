@@ -2,6 +2,7 @@
 members=[
   "auction/program",
 
+  "fireball/program",
   "gumdrop/program",
   "metaplex/program",
   "token-entangler/program",
