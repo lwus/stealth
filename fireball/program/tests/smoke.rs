@@ -284,8 +284,11 @@ async fn test_make_dish() {
         let new_mint = Keypair::new();
         let (new_metadata_key, _) = mpl_token_metadata::pda::find_metadata_account(&new_mint.pubkey());
         let (new_edition_key, _) = mpl_token_metadata::pda::find_master_edition_account(&new_mint.pubkey());
+
+        let edition = index as u64;
+        let as_string = edition.checked_div(mpl_token_metadata::state::EDITION_MARKER_BIT_SIZE).unwrap().to_string();
         let (new_edition_mark_key, _) = mpl_token_metadata::pda::find_edition_account(
-            &new_mint.pubkey(), index.to_string()); // WTF?
+            &master_mint.pubkey(), as_string); // WTF?
 
         let fulfill_instructions = [
             Instruction {
@@ -322,6 +325,36 @@ async fn test_make_dish() {
                     proof: proof_raw,
                 }.data(),
             },
+            system_instruction::create_account(
+                &alice.pubkey(),
+                &new_mint.pubkey(),
+                rent.minimum_balance(spl_token::state::Mint::LEN),
+                spl_token::state::Mint::LEN as u64,
+                &spl_token::id(),
+            ),
+            spl_token::instruction::initialize_mint(
+                &spl_token::id(),
+                &new_mint.pubkey(),
+                &alice.pubkey(), // mint auth
+                Some(&alice.pubkey()), // freeze auth
+                0,
+            ).unwrap(),
+            spl_associated_token_account::create_associated_token_account(
+                &alice.pubkey(), // funding
+                &alice.pubkey(), // wallet to create for
+                &new_mint.pubkey(),
+            ),
+            spl_token::instruction::mint_to(
+                &spl_token::id(),
+                &new_mint.pubkey(),
+                &spl_associated_token_account::get_associated_token_address(
+                    &alice.pubkey(),
+                    &new_mint.pubkey(),
+                ),
+                &alice.pubkey(),
+                &[],
+                1
+            ).unwrap(),
             Instruction {
                 program_id: mpl_fireball::id(),
                 accounts: mpl_fireball::accounts::MakeDish {
@@ -346,7 +379,7 @@ async fn test_make_dish() {
                 }.to_account_metas(None),
                 data: mpl_fireball::instruction::MakeDish {
                     recipe_signer_bump,
-                    edition: index as u64,
+                    edition,
                 }.data(),
             },
         ];
@@ -355,7 +388,7 @@ async fn test_make_dish() {
             Transaction::new_signed_with_payer(
                 &fulfill_instructions,
                 Some(&alice.pubkey()),
-                &[&alice],
+                &[&alice, &new_mint],
                 recent_blockhash,
             )
         ).await.unwrap();
