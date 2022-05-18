@@ -43,7 +43,7 @@ pub enum MetadataError {
     #[error("Update Authority given does not match")]
     UpdateAuthorityIncorrect,
 
-    /// Update Authority needs to be signer to update  metadata
+    /// Update Authority needs to be signer to update metadata
     #[error("Update Authority needs to be signer to update metadata")]
     UpdateAuthorityIsNotSigner,
 
@@ -358,7 +358,7 @@ pub enum MetadataError {
 
     #[error("This Collection Authority Record is invalid.")]
     InvalidCollectionAuthorityRecord,
-    
+
     #[error("Metadata does not match the freeze authority on the mint")]
     InvalidFreezeAuthority,
     #[error("All tokens in this account have not been delegated to this user.")]
@@ -374,7 +374,18 @@ pub enum MetadataError {
     CannotWipeVerifiedCreators,
 
     #[error("Not allowed to change seller fee basis points.")]
-    NotAllowedToChangeSellerFeeBasisPoints
+    NotAllowedToChangeSellerFeeBasisPoints,
+
+    /// Edition override cannot be zero
+    #[error("Edition override cannot be zero")]
+    EditionOverrideCannotBeZero,
+
+    #[error("Invalid User")]
+    InvalidUser,
+
+    /// Revoke Collection Authority signer is incorrect
+    #[error("Revoke Collection Authority signer is incorrect")]
+    RevokeCollectionAuthoritySignerIncorrect,
 }
 
 impl PrintProgramError for MetadataError {

@@ -1,7 +1,6 @@
 use crate::{
     error::ErrorCode,
-    id,
-    state::{MarketState, PrimaryMetadataCreators},
+    state::{MarketState, MINIMUM_BALANCE_FOR_SYSTEM_ACCS},
     utils::*,
     ClaimResource,
 };
@@ -34,7 +33,10 @@ impl<'info> ClaimResource<'info> {
         let is_native = market.treasury_mint == System::id();
 
         let treasury_holder_amount = if is_native {
-            treasury_holder.lamports()
+            treasury_holder
+                .lamports()
+                .checked_sub(MINIMUM_BALANCE_FOR_SYSTEM_ACCS)
+                .ok_or(ErrorCode::MathOverflow)?
         } else {
             let token_account = spl_token::state::Account::unpack(&treasury_holder.data.borrow())?;
             if token_account.owner != market.treasury_owner {

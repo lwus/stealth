@@ -19,6 +19,7 @@ yarn-error.log*
 .idea
 
 .anchor
+.crates/
 
 .pnp.*
 .yarn/*

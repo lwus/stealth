@@ -1,10 +1,13 @@
 use crate::{
     error::ErrorCode,
-    state::{MarketState, SellingResourceState},
+    state::{GatingConfig, MarketState, SellingResourceState, MINIMUM_BALANCE_FOR_SYSTEM_ACCS},
     utils::*,
     CreateMarket,
 };
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    solana_program::{program::invoke, system_instruction},
+};
 use anchor_spl::token::accessor;
 
 impl<'info> CreateMarket<'info> {
@@ -18,6 +21,8 @@ impl<'info> CreateMarket<'info> {
         pieces_in_one_wallet: Option<u64>,
         start_date: u64,
         end_date: Option<u64>,
+        gating_config: Option<GatingConfig>,
+        remaining_accounts: &[AccountInfo<'info>],
     ) -> Result<()> {
         let market = &mut self.market;
         let store = &self.store;
@@ -43,6 +48,11 @@ impl<'info> CreateMarket<'info> {
             return Err(ErrorCode::PiecesInOneWalletIsTooMuch.into());
         }
 
+        // Only new just created selling resource can be used to create market
+        if selling_resource.state != SellingResourceState::Created {
+            return Err(ErrorCode::SellingResourceAlreadyTaken.into());
+        }
+
         // start_date cannot be in the past
         if start_date < Clock::get().unwrap().unix_timestamp as u64 {
             return Err(ErrorCode::StartDateIsInPast.into());
@@ -51,6 +61,31 @@ impl<'info> CreateMarket<'info> {
         // end_date should not be greater than start_date
         if end_date.is_some() && start_date > end_date.unwrap() {
             return Err(ErrorCode::EndDateIsEarlierThanBeginDate.into());
+        }
+
+        if let Some(gating_data) = &gating_config {
+            if let Some(gating_time) = gating_data.gating_time {
+                if gating_time < start_date {
+                    return Err(ErrorCode::WrongGatingDate.into());
+                }
+                if let Some(end_date) = end_date {
+                    if gating_time > end_date {
+                        return Err(ErrorCode::WrongGatingDate.into());
+                    }
+                }
+            }
+
+            if remaining_accounts.len() != 1 {
+                return Err(ErrorCode::CollectionMintMissing.into());
+            }
+
+            let collection_mint = &remaining_accounts[0];
+
+            if collection_mint.key != &gating_data.collection
+                || collection_mint.owner != &spl_token::id()
+            {
+                return Err(ErrorCode::WrongCollectionMintKey.into());
+            }
         }
 
         let is_native = mint.key() == System::id();
@@ -75,6 +110,19 @@ impl<'info> CreateMarket<'info> {
             if treasury_holder.key != owner.key {
                 return Err(ProgramError::InvalidAccountData.into());
             }
+
+            // we need fund treasury holder account such as it will hold some metadata with SOL balance
+            invoke(
+                &system_instruction::transfer(
+                    &selling_resource_owner.key(),
+                    &treasury_holder.key(),
+                    MINIMUM_BALANCE_FOR_SYSTEM_ACCS,
+                ),
+                &[
+                    selling_resource_owner.to_account_info(),
+                    treasury_holder.to_account_info(),
+                ],
+            )?;
         }
 
         // Check selling resource ownership
@@ -94,6 +142,7 @@ impl<'info> CreateMarket<'info> {
         market.start_date = start_date;
         market.end_date = end_date;
         market.state = MarketState::Created;
+        market.gatekeeper = gating_config;
         selling_resource.state = SellingResourceState::InUse;
 
         Ok(())

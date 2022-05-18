@@ -5,6 +5,7 @@ import {
   PayerTransactionHandler,
 } from '@metaplex-foundation/amman';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Creator } from '@metaplex-foundation/mpl-token-metadata';
 
 import { findVaultOwnerAddress } from '../../src/utils';
 
@@ -12,8 +13,6 @@ import { createAndSignTransaction, logDebug } from '../utils';
 import { createTokenAccount } from '../transactions/createTokenAccount';
 import { mintNFT } from './mintNft';
 import { createInitSellingResourceInstruction } from '../../src/generated/instructions';
-import { Creator } from '@metaplex-foundation/mpl-token-metadata';
-import { CreatorAccountData } from '../../src';
 import { createSavePrimaryMetadataCreators } from '../transactions';
 
 type InitSellingResourceParams = {
@@ -39,13 +38,13 @@ export const initSellingResource = async ({
   vaultOwnerBump: number;
   resourceMint: Keypair;
   metadata: PublicKey;
-  primaryMetadataCreators: PublicKey;
+  primaryMetadataCreators: PublicKey[];
 }> => {
-  const secondaryCreator = new Creator({
-    address: payer.publicKey.toBase58(),
+  const secondaryCreator: Creator = {
+    address: payer.publicKey,
     share: 100,
     verified: true,
-  });
+  };
 
   const {
     edition: masterEdition,
@@ -96,11 +95,11 @@ export const initSellingResource = async ({
     },
   );
 
-  const primaryCreator = CreatorAccountData.fromArgs({
+  const primaryCreator = {
     address: payer.publicKey,
     share: 100,
     verified: false,
-  });
+  };
 
   const { savePrimaryMetadataCreatorsInstruction, primaryMetadataCreators } =
     await createSavePrimaryMetadataCreators({
@@ -136,6 +135,6 @@ export const initSellingResource = async ({
     vaultOwnerBump,
     resourceMint,
     metadata,
-    primaryMetadataCreators,
+    primaryMetadataCreators: [primaryMetadataCreators],
   };
 };

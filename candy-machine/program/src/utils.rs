@@ -1,10 +1,13 @@
 use anchor_lang::prelude::{Signer, Sysvar};
+use solana_program::program::invoke;
+use solana_program::system_instruction;
 
 use {
     crate::{CandyMachine, ErrorCode},
     anchor_lang::{
         prelude::{Account, AccountInfo, Clock, ProgramError, ProgramResult, Pubkey},
         solana_program::{
+            msg,
             program::invoke_signed,
             program_pack::{IsInitialized, Pack},
         },
@@ -71,6 +74,26 @@ pub struct TokenTransferParams<'a: 'b, 'b> {
     pub token_program: AccountInfo<'a>,
 }
 
+pub fn punish_bots<'a>(
+    err: ErrorCode,
+    bot_account: AccountInfo<'a>,
+    payment_account: AccountInfo<'a>,
+    system_program: AccountInfo<'a>,
+    fee: u64,
+) -> Result<(), ProgramError> {
+    msg!(
+        "{}, Candy Machine Botting is taxed at {:?} lamports",
+        err.to_string(),
+        fee
+    );
+    let final_fee = fee.min(bot_account.lamports());
+    invoke(
+        &system_instruction::transfer(&bot_account.key, &payment_account.key, final_fee),
+        &[bot_account, payment_account, system_program],
+    )?;
+    Ok(())
+}
+
 #[inline(always)]
 pub fn spl_token_transfer(params: TokenTransferParams<'_, '_>) -> ProgramResult {
     let TokenTransferParams {
@@ -111,6 +134,7 @@ pub fn assert_is_ata<'a>(
     assert_owned_by(ata, &spl_token::id())?;
     let ata_account: spl_token::state::Account = assert_initialized(ata)?;
     assert_keys_equal(ata_account.owner, *wallet)?;
+    assert_keys_equal(ata_account.mint, *mint)?;
     assert_keys_equal(get_associated_token_address(wallet, mint), *ata.key)?;
     Ok(ata_account)
 }

@@ -1,7 +1,7 @@
 use crate::*;
 use mpl_token_vault::instruction;
 use solana_program::{borsh::try_from_slice_unchecked, system_instruction};
-use solana_program_test::*;
+
 use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
@@ -51,7 +51,7 @@ impl ExternalPrice {
             context.last_blockhash,
         );
 
-        Ok(context.banks_client.process_transaction(tx).await?)
+        context.banks_client.process_transaction(tx).await
     }
 
     pub async fn create(&self, context: &mut ProgramTestContext) -> transport::Result<()> {
@@ -77,6 +77,12 @@ impl ExternalPrice {
             context.last_blockhash,
         );
 
-        Ok(context.banks_client.process_transaction(tx).await?)
+        context.banks_client.process_transaction(tx).await
+    }
+}
+
+impl Default for ExternalPrice {
+    fn default() -> Self {
+        Self::new()
     }
 }

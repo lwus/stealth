@@ -3,6 +3,9 @@
 use crate::utils::{DESCRIPTION_DEFAULT_SIZE, MAX_PRIMARY_CREATORS_LEN, NAME_DEFAULT_SIZE};
 use anchor_lang::prelude::*;
 
+// by system acc I mean account to hold only native SOL
+pub const MINIMUM_BALANCE_FOR_SYSTEM_ACCS: u64 = 890880;
+
 #[account]
 pub struct Store {
     pub admin: Pubkey,
@@ -66,6 +69,7 @@ pub struct Market {
     pub state: MarketState,
     // need this field to calculate royalties at withdraw
     pub funds_collected: u64,
+    pub gatekeeper: Option<GatingConfig>,
 }
 
 impl Market {
@@ -84,7 +88,19 @@ impl Market {
         + 8
         + 9
         + 1
-        + 8;
+        + 8
+        + 1
+        + 32
+        + 1
+        + 9;
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Debug, PartialEq, Eq)]
+pub struct GatingConfig {
+    pub collection: Pubkey,
+    /// whether program will burn token or just check availability
+    pub expire_on_use: bool,
+    pub gating_time: Option<u64>,
 }
 
 #[account]
@@ -106,4 +122,14 @@ pub struct PrimaryMetadataCreators {
 
 impl PrimaryMetadataCreators {
     pub const LEN: usize = 8 + ((32 + 1 + 1) * MAX_PRIMARY_CREATORS_LEN + 1);
+}
+
+#[account]
+#[derive(Default)]
+pub struct PayoutTicket {
+    pub used: bool,
+}
+
+impl PayoutTicket {
+    pub const LEN: usize = 1;
 }

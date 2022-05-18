@@ -115,6 +115,7 @@ mod claim_resource {
             pieces_in_one_wallet,
             start_date: start_date as u64,
             end_date: None,
+            gating_config: None,
         }
         .data();
 
@@ -431,9 +432,6 @@ mod claim_resource {
         )
         .await;
 
-        let (_primary_metadata_creators, primary_metadata_creators_bump) =
-            mpl_fixed_price_sale::utils::find_primary_metadata_creators(&metadata);
-
         let accounts = mpl_fixed_price_sale_accounts::ClaimResource {
             market: market_keypair.pubkey(),
             treasury_holder: treasury_holder_keypair.pubkey(),
@@ -536,6 +534,7 @@ mod claim_resource {
             pieces_in_one_wallet,
             start_date: start_date as u64,
             end_date: None,
+            gating_config: None,
         }
         .data();
 
@@ -772,8 +771,6 @@ mod claim_resource {
             &primary_royalties_receiver.pubkey(),
         );
 
-        let destination = selling_resource_owner_keypair.pubkey();
-
         let (metadata, _) = Pubkey::find_program_address(
             &[
                 mpl_token_metadata::state::PREFIX.as_bytes(),
@@ -833,9 +830,6 @@ mod claim_resource {
             &admin_wallet.pubkey(),
         )
         .await;
-
-        let (_primary_metadata_creators, primary_metadata_creators_bump) =
-            mpl_fixed_price_sale::utils::find_primary_metadata_creators(&metadata);
 
         let accounts = mpl_fixed_price_sale_accounts::ClaimResource {
             market: market_keypair.pubkey(),
@@ -956,6 +950,7 @@ mod claim_resource {
             pieces_in_one_wallet,
             start_date: start_date as u64,
             end_date: None,
+            gating_config: None,
         }
         .data();
 
@@ -1218,9 +1213,6 @@ mod claim_resource {
             &admin_wallet.pubkey(),
         )
         .await;
-
-        let (_primary_metadata_creators, primary_metadata_creators_bump) =
-            mpl_fixed_price_sale::utils::find_primary_metadata_creators(&metadata);
 
         let accounts = mpl_fixed_price_sale_accounts::ClaimResource {
             market: market_keypair.pubkey(),

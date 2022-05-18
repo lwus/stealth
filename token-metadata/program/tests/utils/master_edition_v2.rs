@@ -10,7 +10,7 @@ use solana_program::{
     instruction::{AccountMeta, Instruction},
     sysvar,
 };
-use solana_program_test::*;
+
 use solana_sdk::{
     pubkey::Pubkey,
     signature::{Keypair, Signer},
@@ -41,7 +41,7 @@ impl MasterEditionV2 {
         MasterEditionV2 {
             pubkey,
             metadata_pubkey: metadata.pubkey,
-            mint_pubkey: mint_pubkey,
+            mint_pubkey,
         }
     }
 
@@ -93,7 +93,7 @@ impl MasterEditionV2 {
             context.last_blockhash,
         );
 
-        Ok(context.banks_client.process_transaction(tx).await?)
+        context.banks_client.process_transaction(tx).await
     }
 
     pub async fn create(
@@ -117,7 +117,7 @@ impl MasterEditionV2 {
             context.last_blockhash,
         );
 
-        Ok(context.banks_client.process_transaction(tx).await?)
+        context.banks_client.process_transaction(tx).await
     }
 
     pub async fn create_v3(
@@ -141,6 +141,6 @@ impl MasterEditionV2 {
             context.last_blockhash,
         );
 
-        Ok(context.banks_client.process_transaction(tx).await?)
+        context.banks_client.process_transaction(tx).await
     }
 }
