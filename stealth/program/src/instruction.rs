@@ -56,114 +56,81 @@ pub struct TransferChunkSlowData {
     pub transfer: TransferData,
 }
 
-#[derive(Clone, Copy, BorshSerialize, BorshDeserialize, ShankInstruction)]
+#[derive(Clone, Copy, BorshSerialize, BorshDeserialize, shank::ShankInstruction)]
 #[repr(u8)]
 pub enum StealthInstruction {
     /// Configures private metadata for an NFT
-    #[account(0, writable, name="payer",
-    desc="Payer")]
-    #[account(1, name="mint",
-    desc = "The SPL Token mint account of the NFT")]
-    #[account(2, signer, name="update_authority",
-    desc = "The update authority for the SPL Metadata")]
-    #[account(3, writable, name="stealth_pda",
-    desc = "Stealth PDA")]
-    #[account(4, name="authority",
-    desc = "Authority on the vault")]
-    #[account(5, name="system_program",
-    desc = "System Program")]
-    #[account(6, name="rent",
-    desc = "Rent sysvar")]
+    #[account(0, sig, mut, name = "payer",            desc = "rent payer")]
+    #[account(1,           name = "mint",             desc = "spl token mint")]
+    #[account(2,           name = "metadata",         desc = "mpl token metadata")]
+    #[account(3, sig,      name = "update_authority", desc = "update authority for the mpl metadata")]
+    #[account(4, mut,      name = "stealth_pda",      desc = "stealth pda")]
+    #[account(5,           name = "system_program",   desc = "system program")]
+    #[account(6,           name = "rent",             desc = "rent sysvar")]
     ConfigureMetadata(ConfigureMetadataData),
 
     /// Initialise transfer state for private metadata
-    ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` The owner of the NFT
-    ///   1. `[]` The SPL Token mint account of the NFT
-    ///   2. `[]` The SPL Token account holding the NFT
-    ///   3. `[writable]` Stealth PDA
-    ///   4. `[]` Recipient wallet
-    ///   5. `[]` Recipient elgamal pubkey PDA
-    ///   6. `[writable]` Transfer buffer PDA. Will hold CipherKeyTransferBuffer
-    ///   7. `[]` System program
-    ///   8. `[]` Rent sysvar
-    ///
-    /// Data expected by this instruction:
-    ///
+    #[account(0, sig, mut, name = "owner",            desc = "current nft owner")]
+    #[account(1,           name = "mint",             desc = "spl token mint")]
+    #[account(2,           name = "token_account",    desc = "spl token account")]
+    #[account(3, mut,      name = "stealth_pda",      desc = "stealth pda")]
+    #[account(4,           name = "recipient",        desc = "recipient wallet")]
+    #[account(5,           name = "recipient_elgamal",desc = "recipient elgamal pubkey pda")]
+    #[account(6, mut,      name = "transfer_buffer",  desc = "transfer buffer pda. will hold CipherKeyTransferBuffer")]
+    #[account(7,           name = "system_program",   desc = "system program")]
+    #[account(8,           name = "rent",             desc = "rent sysvar")]
     InitTransfer,
 
     /// Finalise transfer state for private metadata and swap cipher texts
-    ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` Authority. Must be the authority on the transfer buffer
-    ///   1. `[]` Stealth PDA
-    ///   2. `[writable]` Transfer buffer program account
-    ///   3. `[]` System program
-    ///
+    #[account(0, sig, mut, name = "authority",        desc = "authority on the transfer buffer")]
+    #[account(1, mut,      name = "stealth_pda",      desc = "stealth pda")]
+    #[account(2, mut,      name = "transfer_buffer",  desc = "transfer buffer pda")]
+    #[account(3,           name = "system_program",   desc = "system program")]
     FiniTransfer,
 
     /// Validate encrypted cipher key chunk. NB: this will not run within compute limits without
     /// syscall support for crypto instructions.
     ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` Authority. Must be the authority on the transfer buffer
-    ///   1. `[]` Stealth PDA
-    ///   2. `[writable]` Transfer buffer program account
-    ///   3. `[]` System program
-    ///
     /// Data expected by this instruction:
     ///   TransferChunkData
     ///
+    #[account(0, sig, mut, name = "authority",        desc = "authority on the transfer buffer")]
+    #[account(1,           name = "stealth_pda",      desc = "stealth pda")]
+    #[account(2, mut,      name = "transfer_buffer",  desc = "transfer buffer pda")]
+    #[account(3,           name = "system_program",   desc = "system program")]
     TransferChunk(TransferChunkData),
 
     /// Validate encrypted cipher key chunk through a manual DSL cranked instruction.
     ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` Authority. Must be the authority on the transfer buffer
-    ///   1. `[]` Stealth PDA
-    ///   2. `[writable]` Transfer buffer program account
-    ///   3. `[]` Instruction buffer. Must match Header + equality_proof::DSL_INSTRUCTION_BYTES
-    ///   4. `[]` Input buffer. Must have the appropriate proof points and scalars
-    ///   5. `[]` Compute buffer. Must match the instruction + input buffers and have been cranked
-    ///      for all DSL instructions
-    ///   6. `[]` System program
-    ///
     /// Data expected by this instruction:
     ///   TransferChunkSlowData
     ///
+    #[account(0, sig, mut, name = "authority",          desc = "authority on the transfer buffer")]
+    #[account(1,           name = "stealth_pda",        desc = "stealth pda")]
+    #[account(2, mut,      name = "transfer_buffer",    desc = "transfer buffer pda")]
+    #[account(3, mut,      name = "instruction_buffer", desc = "must match header + equality_proof::DSL_INSTRUCTION_BYTES")]
+    #[account(4, mut,      name = "input_buffer",       desc = "must have the appropriate proof points and scalars")]
+    #[account(5, mut,      name = "compute_buffer",     desc = "must match the instruction + input buffers and have been cranked for all DSL instructions")]
+    #[account(6,           name = "system_program",     desc = "system program")]
     TransferChunkSlow(TransferChunkSlowData),
 
     /// Write an elgamal pubkey into the associated buffer for this wallet and mint
     ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` Wallet to publish for
-    ///   1. `[]` The SPL Token mint account of the NFT
-    ///   2. `[writable]` The elgamal pubkey PDA
-    ///   3. `[]` System program
-    ///   4. `[]` Rent sysvar
-    ///
     /// Data expected by this instruction:
     ///   elgamal_pk: The recipients elgamal public-key
     ///
+    #[account(0, sig, mut, name = "wallet",           desc = "wallet to publish for")]
+    #[account(1,           name = "mint",             desc = "spl token mint")]
+    #[account(2, mut,      name = "elgamal",          desc = "elgamal pubkey pda")]
+    #[account(3,           name = "system_program",   desc = "system program")]
+    #[account(4,           name = "rent",             desc = "rent sysvar")]
     PublishElgamalPubkey(zk_token_elgamal::pod::ElGamalPubkey),
 
     /// Close the associated elgamal pubkey buffer for this wallet and mint
-    ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` Wallet to close buffer for
-    ///   1. `[]` The SPL Token mint account of the NFT
-    ///   2. `[writable]` The elgamal pubkey PDA
-    ///   3. `[]` System program
-    ///
-    /// Data expected by this instruction:
-    ///
+    #[account(0, sig, mut, name = "wallet",           desc = "wallet to close for")]
+    #[account(1,           name = "mint",             desc = "spl token mint")]
+    #[account(2, mut,      name = "elgamal",          desc = "elgamal pubkey pda")]
+    #[account(3,           name = "system_program",   desc = "system program")]
     CloseElgamalPubkey,
 
 
@@ -173,16 +140,6 @@ pub enum StealthInstruction {
     ///
     /// Also reinitializes the elgamal_pk in case NFT ownership has changed
     ///
-    /// Accounts expected by this instruction:
-    ///
-    ///   0. `[writeable,signer]` Payer
-    ///   1. `[]` The SPL Token mint account of the NFT
-    ///   2. `[]` The current NFT owner
-    ///   3. `[]` The current NFT owner's token account
-    ///   4. `[]` The SPL Metadata account. Must be mutable
-    ///   5. `[signer]` The update authority for the SPL Metadata
-    ///   6. `[writeable]` Stealth PDA
-    ///
     /// If the current owner (2) does not match the wallet_pk of the stealth account, the
     /// following counts are also required
     ///
@@ -191,6 +148,13 @@ pub enum StealthInstruction {
     /// Data expected by this instruction:
     ///   ConfigureMetadataData
     ///
+    #[account(0, sig,      name = "payer",            desc = "currently unused")]
+    #[account(1,           name = "mint",             desc = "spl token mint")]
+    #[account(2,           name = "owner",            desc = "current owner")]
+    #[account(3,           name = "token_account",    desc = "spl token account")]
+    #[account(4,           name = "metadata",         desc = "mpl token metadata")]
+    #[account(5, sig,      name = "update_authority", desc = "update authority for the mpl metadata")]
+    #[account(6, mut,      name = "stealth_pda",      desc = "stealth pda")]
     UpdateMetadata(ConfigureMetadataData),
 }
 
