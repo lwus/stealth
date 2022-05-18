@@ -643,7 +643,7 @@ pub fn transfer_chunk_slow_proof<F>(
 
     let mut add_crank_batch = |count| {
         let mut instructions = vec![
-            solana_sdk::compute_budget::ComputeBudgetInstruction::request_units(1_000_000),
+            solana_sdk::compute_budget::ComputeBudgetInstruction::request_units(1_000_000, 0),
             dalek::noop(crank_transactions),
         ];
         instructions.extend_from_slice(&vec![crank.clone(); count]);
