@@ -67,7 +67,7 @@ unsafe impl Zeroable for URI {}
 unsafe impl Pod for URI {}
 
 /// Account data
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable, shank::ShankAccount)]
 #[repr(C)]
 pub struct StealthAccount {
     pub key: Key,
@@ -95,7 +95,7 @@ pub struct StealthAccount {
 }
 impl PodAccountInfo<'_, '_> for StealthAccount {}
 
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable, shank::ShankAccount)]
 #[repr(C)]
 pub struct CipherKeyTransferBuffer {
     pub key: Key,
@@ -118,7 +118,7 @@ pub struct CipherKeyTransferBuffer {
 }
 impl PodAccountInfo<'_, '_> for CipherKeyTransferBuffer {}
 
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable, shank::ShankAccount)]
 #[repr(C)]
 pub struct EncryptionKeyBuffer {
     pub key: Key,
