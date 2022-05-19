@@ -32,7 +32,7 @@ pub mod stealth_escrow {
         ctx: Context<InitEscrow>,
         collateral: u64,
         slots: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         let escrow = &mut ctx.accounts.escrow;
 
         escrow.bidder = ctx.accounts.bidder.key();
@@ -56,7 +56,7 @@ pub mod stealth_escrow {
 
     pub fn close_escrow<'info>(
         ctx: Context<'_, '_, '_, 'info, CloseEscrow<'info>>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         let escrow = &ctx.accounts.escrow;
 
         if let Some(accept_slot) = escrow.accept_slot {
@@ -65,7 +65,7 @@ pub mod stealth_escrow {
                 .ok_or(ProgramError::InvalidArgument)?;
             let clock = Clock::get()?;
             if clock.slot < unlocked_slot {
-                return Err(ProgramError::InvalidArgument);
+                return Err(ProgramError::InvalidArgument.into());
             }
 
             // return the NFT
@@ -87,7 +87,7 @@ pub mod stealth_escrow {
             let accept_token_account = spl_token::state::Account::unpack_from_slice(
                 &acceptor_token_account_info.try_borrow_data()?)?;
             if accept_token_account.owner != escrow.acceptor {
-                return Err(ProgramError::InvalidArgument);
+                return Err(ProgramError::InvalidArgument.into());
             }
 
             token::transfer(
@@ -121,7 +121,7 @@ pub mod stealth_escrow {
 
     pub fn accept_escrow(
         ctx: Context<AcceptEscrow>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
 
         // init transfer before escrowing NFT
         invoke(
@@ -209,7 +209,7 @@ pub mod stealth_escrow {
 
     pub fn complete_escrow<'info>(
         ctx: Context<'_, '_, '_, 'info, CompleteEscrow<'info>>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
 
         // finalize secret transfer
         invoke(
@@ -292,7 +292,7 @@ pub mod stealth_escrow {
 
                     let current_creator_info = next_account_info(remaining_accounts)?;
                     if creator.address != *current_creator_info.key {
-                        return Err(ProgramError::InvalidArgument);
+                        return Err(ProgramError::InvalidArgument.into());
                     }
 
                     if creator_fee == 0 {
@@ -325,6 +325,7 @@ pub mod stealth_escrow {
 
 #[derive(Accounts)]
 pub struct InitEscrow<'info> {
+    #[account(mut)]
     pub bidder: Signer<'info>,
 
     pub mint: Account<'info, Mint>,
