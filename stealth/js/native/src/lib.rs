@@ -238,6 +238,28 @@ pub fn elgamal_decrypt(elgamal_keypair: &JsValue, ciphertext: &JsValue) -> JsVal
 }
 
 #[wasm_bindgen]
+pub fn elgamal_encrypt(elgamal_pubkey: &JsValue, plaintext: &JsValue) -> JsValue {
+    let go = || -> Result<ElGamalCiphertextBytes, String> {
+        debug(&format!("Inputs\n\telgamal_pubkey: {:?}\n\tplaintext: {:?}", elgamal_pubkey, plaintext));
+
+        let elgamal_pubkey: ElGamalPubkey = elgamal_pubkey.into_serde().map_err(to_string)?;
+        let plaintext_bytes: CipherKey = plaintext.into_serde().map_err(to_string)?;
+
+        debug(&format!("Processed Inputs"));
+
+        let res = elgamal_pubkey.encrypt(
+            plaintext_bytes,
+        );
+
+        debug(&format!("Finished compute"));
+
+        Ok(ElGamalCiphertextBytes { bytes: pod::ElGamalCiphertext::from(res).0 })
+    };
+
+    JsValue::from_serde(&go()).unwrap()
+}
+
+#[wasm_bindgen]
 pub fn transfer_chunk_txs(
     elgamal_keypair: &JsValue,
     recipient_elgamal_pubkey: &JsValue,
