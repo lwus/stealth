@@ -25,14 +25,14 @@ default = []
 anchor-lang = "0.22.1"
 anchor-spl = "0.22.1"
 mpl-token-metadata = { path = "../../token-metadata/program", features = ["no-entrypoint"] }
-solana-program = "1.9.4"
+solana-program = "1.9.15"
 spl-token = { version="3.2.0", features = [ "no-entrypoint" ] }
 stealth = { path = "../program", features = ["no-entrypoint"] }
 
 [target.'cfg(not(target_arch = "bpf"))'.dependencies]
 rand_core = "0.6.3"
-solana-program-test = "1.9.4"
-solana-sdk = "1.9.4"
+solana-program-test = "1.9.15"
+solana-sdk = "1.9.15"
 spl-associated-token-account = { version = "1.0.3", features = [ "no-entrypoint" ] }
 tarpc = "0.27.2"
 time = "0.1.40"
