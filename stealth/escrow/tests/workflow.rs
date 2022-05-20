@@ -349,6 +349,9 @@ async fn test_successful_escrow() {
         ),
     ).await.unwrap();
 
+    let pre_close_lamports = banks_client.get_balance(
+        seller.pubkey()).await.unwrap();
+
     // and complete escrow
     let stealth_key = get_stealth_address(&mint).0;
     let mut complete_escrow_accounts = stealth_escrow::accounts::CompleteEscrow {
@@ -405,6 +408,13 @@ async fn test_successful_escrow() {
             |ct: ElGamalCiphertext| ct.decrypt(&buyer_elgamal_kp.secret)),
         Ok(cipher_key),
     );
+
+
+    let post_close_lamports = banks_client.get_balance(
+        seller.pubkey()).await.unwrap();
+
+    // also gets rent + collateral
+    assert!(post_close_lamports > pre_close_lamports + 10 * LAMPORTS_PER_SOL);
 }
 
 #[tokio::test]
