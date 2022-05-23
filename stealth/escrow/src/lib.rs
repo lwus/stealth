@@ -210,6 +210,9 @@ pub mod stealth_escrow {
     pub fn complete_escrow<'info>(
         ctx: Context<'_, '_, '_, 'info, CompleteEscrow<'info>>,
     ) -> Result<()> {
+        if ctx.accounts.bidder_token_account.owner != *ctx.accounts.bidder.key {
+            return Err(ProgramError::InvalidArgument.into());
+        }
 
         // finalize secret transfer
         invoke(
@@ -454,7 +457,7 @@ pub struct CompleteEscrow<'info> {
 
     // checked during spl_token::transfer from `escrow_token_account`
     #[account(mut)]
-    pub bidder_token_account: AccountInfo<'info>,
+    pub bidder_token_account: Account<'info, token::TokenAccount>,
 
     /*
      * seller accept accounts
