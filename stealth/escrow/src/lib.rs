@@ -5,7 +5,7 @@ use anchor_spl::{
     token::{self, Mint, Token},
 };
 use solana_program::{
-    program::{invoke, invoke_signed},
+    program::invoke,
     system_instruction,
 };
 use std::convert::TryInto;
@@ -302,19 +302,10 @@ pub mod stealth_escrow {
                         continue;
                     }
 
-                    invoke_signed(
-                        &system_instruction::transfer(
-                            &ctx.accounts.escrow.key(),
-                            current_creator_info.key,
-                            creator_fee,
-                        ),
-                        &[
-                            ctx.accounts.escrow.to_account_info(),
-                            current_creator_info.clone(),
-                            ctx.accounts.system_program.to_account_info(),
-                        ],
-                        escrow_signer_seeds,
-                    )?;
+                    let start = current_creator_info.lamports();
+                    **current_creator_info.lamports.borrow_mut() = start
+                        .checked_add(creator_fee)
+                        .ok_or(ProgramError::InvalidArgument)?;
                 }
             }
             None => {
