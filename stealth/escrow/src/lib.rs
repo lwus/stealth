@@ -451,6 +451,7 @@ pub struct CompleteEscrow<'info> {
         ],
         bump,
         mut,
+        has_one = acceptor,
         close = acceptor,
     )]
     pub escrow: Account<'info, BidEscrow>,
