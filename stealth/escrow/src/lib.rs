@@ -282,6 +282,7 @@ pub mod stealth_escrow {
             .checked_div(10000)
             .ok_or(ProgramError::InvalidArgument)?;
 
+        let escrow_info = ctx.accounts.escrow.to_account_info();
         match metadata.data.creators {
             Some(creators) => {
                 let remaining_accounts = &mut ctx.remaining_accounts.iter();
@@ -305,6 +306,11 @@ pub mod stealth_escrow {
                     let start = current_creator_info.lamports();
                     **current_creator_info.lamports.borrow_mut() = start
                         .checked_add(creator_fee)
+                        .ok_or(ProgramError::InvalidArgument)?;
+
+                    let start = escrow_info.lamports();
+                    **escrow_info.lamports.borrow_mut() = start
+                        .checked_sub(creator_fee)
                         .ok_or(ProgramError::InvalidArgument)?;
                 }
             }
