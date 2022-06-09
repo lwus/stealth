@@ -790,27 +790,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "curve25519-dalek"
-version = "3.2.0"
-source = "git+https://github.com/lwus/curve25519-dalek-onchain#ec5af54e4de03c6ec30d2d33884a56a58b30cd18"
-dependencies = [
- "byteorder",
- "digest 0.9.0",
- "rand_core 0.6.3",
- "serde",
- "subtle",
- "zeroize",
-]
-
-[[package]]
 name = "curve25519-dalek-onchain"
 version = "0.0.1"
-source = "git+https://github.com/lwus/curve25519-dalek-onchain#ec5af54e4de03c6ec30d2d33884a56a58b30cd18"
+source = "git+https://github.com/lwus/curve25519-dalek-onchain#c4eefaf836e5e351bac3048baba98e26f3fa69df"
 dependencies = [
  "borsh",
  "bytemuck",
  "byteorder",
- "curve25519-dalek 3.2.0 (git+https://github.com/lwus/curve25519-dalek-onchain)",
+ "curve25519-dalek 3.2.0 (git+https://github.com/lwus/curve25519-dalek)",
  "digest 0.9.0",
  "num-derive",
  "num-traits",
