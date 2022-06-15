@@ -94,6 +94,8 @@ fn process_configure_metadata(
     let account_info_iter = &mut accounts.iter();
     let payer_info = next_account_info(account_info_iter)?;
     let mint_info = next_account_info(account_info_iter)?;
+    let owner_info = next_account_info(account_info_iter)?;
+    let owner_token_account_info = next_account_info(account_info_iter)?;
     let metadata_info = next_account_info(account_info_iter)?;
     let metadata_update_authority_info = next_account_info(account_info_iter)?;
     let stealth_info = next_account_info(account_info_iter)?;
@@ -110,6 +112,7 @@ fn process_configure_metadata(
         return Err(ProgramError::InvalidArgument);
     }
     validate_account_owner(mint_info, &spl_token::ID)?;
+    validate_account_owner(owner_token_account_info, &spl_token::ID)?;
     validate_account_owner(metadata_info, &mpl_token_metadata::ID)?;
 
     let metadata = validate_metadata(metadata_info, mint_info)?;
@@ -117,6 +120,8 @@ fn process_configure_metadata(
         msg!("Invalid metadata update authority");
         return Err(StealthError::InvalidUpdateAuthority.into());
     }
+
+    validate_owns_token(owner_info, mint_info, owner_token_account_info)?;
 
 
     // check that Stealth matches mint
@@ -148,7 +153,7 @@ fn process_configure_metadata(
 
     stealth.key = Key::StealthAccountV1;
     stealth.mint = *mint_info.key;
-    stealth.wallet_pk = *payer_info.key;
+    stealth.wallet_pk = *owner_info.key;
     stealth.elgamal_pk = data.elgamal_pk;
     stealth.encrypted_cipher_key = data.encrypted_cipher_key;
     stealth.uri = data.uri;
@@ -190,25 +195,7 @@ fn process_update_metadata(
         return Err(StealthError::InvalidUpdateAuthority.into());
     }
 
-
-    // check against owner
-    let owner_token_account = spl_token::state::Account::unpack(
-        &owner_token_account_info.data.borrow())?;
-
-    if owner_token_account.mint != *mint_info.key {
-        msg!("Mint mismatch");
-        return Err(ProgramError::InvalidArgument);
-    }
-
-    if owner_token_account.owner != *owner_info.key {
-        msg!("Owner mismatch");
-        return Err(ProgramError::InvalidArgument);
-    }
-
-    if owner_token_account.amount != 1 {
-        msg!("Invalid amount");
-        return Err(ProgramError::InvalidArgument);
-    }
+    validate_owns_token(owner_info, mint_info, owner_token_account_info)?;
 
 
     // check that Stealth matches mint
@@ -856,6 +843,33 @@ fn validate_metadata(
     }
 
     Ok(metadata)
+}
+
+fn validate_owns_token(
+    owner_info: &AccountInfo,
+    mint_info: &AccountInfo,
+    owner_token_account_info: &AccountInfo,
+) -> Result<(), ProgramError> {
+    // check against owner
+    let owner_token_account = spl_token::state::Account::unpack(
+        &owner_token_account_info.data.borrow())?;
+
+    if owner_token_account.mint != *mint_info.key {
+        msg!("Mint mismatch");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    if owner_token_account.owner != *owner_info.key {
+        msg!("Owner mismatch");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    if owner_token_account.amount != 1 {
+        msg!("Invalid amount");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    Ok(())
 }
 
 // check that elgamal PDAs match

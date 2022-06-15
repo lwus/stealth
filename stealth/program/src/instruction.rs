@@ -62,11 +62,13 @@ pub enum StealthInstruction {
     /// Configures private metadata for an NFT
     #[account(0, sig, mut, name = "payer",            desc = "rent payer")]
     #[account(1,           name = "mint",             desc = "spl token mint")]
-    #[account(2,           name = "metadata",         desc = "mpl token metadata")]
-    #[account(3, sig,      name = "update_authority", desc = "update authority for the mpl metadata")]
-    #[account(4, mut,      name = "stealth_pda",      desc = "stealth pda")]
-    #[account(5,           name = "system_program",   desc = "system program")]
-    #[account(6,           name = "rent",             desc = "rent sysvar")]
+    #[account(2,           name = "owner",            desc = "current owner")]
+    #[account(3,           name = "token_account",    desc = "spl token account")]
+    #[account(4,           name = "metadata",         desc = "mpl token metadata")]
+    #[account(5, sig,      name = "update_authority", desc = "update authority for the mpl metadata")]
+    #[account(6, mut,      name = "stealth_pda",      desc = "stealth pda")]
+    #[account(7,           name = "system_program",   desc = "system program")]
+    #[account(8,           name = "rent",             desc = "rent sysvar")]
     ConfigureMetadata(ConfigureMetadataData),
 
     /// Initialise transfer state for private metadata
@@ -229,6 +231,9 @@ pub fn configure_metadata(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
+        AccountMeta::new_readonly(payer, false),
+        AccountMeta::new_readonly(
+            spl_associated_token_account::get_associated_token_address(&payer, &mint), false),
         AccountMeta::new_readonly(get_metadata_address(&mint).0, false),
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new(get_stealth_address(&mint).0, false),
